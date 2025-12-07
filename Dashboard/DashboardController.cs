@@ -5,7 +5,8 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Networking;
 using Newtonsoft.Json.Linq;
-using XCharts.Runtime;   
+using XCharts.Runtime;
+
 
 public class DashboardController : MonoBehaviour
 {
@@ -14,7 +15,7 @@ public class DashboardController : MonoBehaviour
     public string apiToken;
 
     [Header("Trend Chart")]
-    public LineChart trendChart;  
+    public LineChart trendChart;
 
     [Header("UI References")]
     public TMP_Dropdown buildingDropdown;
@@ -28,16 +29,24 @@ public class DashboardController : MonoBehaviour
     public Transform floorContent;
 
     private JObject latestData;
-    private List<int> freeSeatHistory = new List<int>();
-    private const int maxPoints = 180;
+
+    // --- Each building has its own history ---
+    private Dictionary<string, List<int>> history = new Dictionary<string, List<int>>()
+    {
+        { "One Pool Street", new List<int>() },
+        { "Marshgate", new List<int>() }
+    };
+
+    private const int maxPoints = 180;  // 30 minutes (180 * 10 sec updates)
 
     void Start()
     {
         floorRowTemplate.SetActive(false);
         buildingDropdown.onValueChanged.AddListener(OnBuildingChanged);
-        StartCoroutine(FetchAPIRepeated());
 
-        InitChart();   
+        InitializeChart();
+
+        StartCoroutine(FetchAPIRepeated());
     }
 
     IEnumerator FetchAPIRepeated()
@@ -61,6 +70,10 @@ public class DashboardController : MonoBehaviour
             latestData = JObject.Parse(www.downloadHandler.text);
             UpdateBuildingUI();
         }
+        else
+        {
+            Debug.Log("API ERROR: " + www.error);
+        }
     }
 
     void OnBuildingChanged(int index)
@@ -73,15 +86,13 @@ public class DashboardController : MonoBehaviour
         if (latestData == null) return;
 
         string uiName = buildingDropdown.options[buildingDropdown.value].text;
-        string targetName = uiName == "One Pool Street"
-            ? "East Campus - Pool St"
-            : "East Campus - Marshgate";
 
-        // find data
-        JArray surveys = (JArray)latestData["surveys"];
+        string targetName =
+            uiName == "One Pool Street" ? "East Campus - Pool St" : "East Campus - Marshgate";
+
+        // Find survey
         JObject targetSurvey = null;
-
-        foreach (var item in surveys)
+        foreach (var item in latestData["surveys"])
         {
             if (item["name"].ToString() == targetName)
             {
@@ -90,33 +101,40 @@ public class DashboardController : MonoBehaviour
             }
         }
 
-        if (targetSurvey == null) return;
+        if (targetSurvey == null)
+        {
+            Debug.Log("Building not found: " + targetName);
+            return;
+        }
 
-        int free = targetSurvey["sensors_absent"].Value<int>();
-        int occ = targetSurvey["sensors_occupied"].Value<int>();
-        int total = free + occ;
+        // Read seat numbers
+        int totalFree = targetSurvey["sensors_absent"].Value<int>();
+        int totalOccupied = targetSurvey["sensors_occupied"].Value<int>();
+        int total = totalFree + totalOccupied;
 
-        float rate = total > 0 ? (float)free / total : 0f;
+        float freeRate = total > 0 ? (float)totalFree / total : 0f;
 
-        // update UI
-        totalFreeText.text = $"Free: {free}";
-        totalOccupiedText.text = $"Occupied: {occ}";
-        freeRateText.text = $"FreeRate: {Mathf.RoundToInt(rate * 100)}%";
-        occupyBarFill.fillAmount = rate;
+        // Update UI
+        totalFreeText.text = "Free: " + totalFree;
+        totalOccupiedText.text = "Occupied: " + totalOccupied;
+        freeRateText.text = Mathf.RoundToInt(freeRate * 100) + "%";
+        occupyBarFill.fillAmount = freeRate;
 
         UpdateFloorRows((JArray)targetSurvey["maps"]);
 
-        freeSeatHistory.Add(free);
-        if (freeSeatHistory.Count > maxPoints)
-            freeSeatHistory.RemoveAt(0);
+        // --- Add real-time history for the correct building ---
+        List<int> list = history[uiName];
+        list.Add(totalFree);
+        if (list.Count > maxPoints)
+            list.RemoveAt(0);
 
         UpdateTrendChart();
     }
 
     void UpdateFloorRows(JArray floors)
     {
-        foreach (Transform c in floorContent)
-            Destroy(c.gameObject);
+        foreach (Transform child in floorContent)
+            Destroy(child.gameObject);
 
         foreach (var f in floors)
         {
@@ -124,33 +142,39 @@ public class DashboardController : MonoBehaviour
             row.SetActive(true);
 
             row.transform.Find("FloorName").GetComponent<TMP_Text>().text = f["name"].ToString();
-            row.transform.Find("FreeSeats").GetComponent<TMP_Text>().text = $"Free: {f["sensors_absent"]}";
-            row.transform.Find("OccupySeats").GetComponent<TMP_Text>().text = $"Occupied: {f["sensors_occupied"]}";
+            row.transform.Find("FreeSeats").GetComponent<TMP_Text>().text =
+                "Free: " + f["sensors_absent"].Value<int>();
+            row.transform.Find("OccupySeats").GetComponent<TMP_Text>().text =
+                "Occupied: " + f["sensors_occupied"].Value<int>();
         }
     }
 
+    // ---------------------------
+    //   XCharts: Trend Line Setup
+    // ---------------------------
+    void InitializeChart()
+    {
+        trendChart.ClearData();
 
-    void InitChart()
-{
-    if (trendChart == null) return;
-    trendChart.ClearData();
-}
+        if (trendChart.series.Count == 0)
+            trendChart.AddSerie<Line>("FreeSeats");
 
+        trendChart.series[0].lineStyle.width = 3;
+    }
 
     void UpdateTrendChart()
-{
-    if (trendChart == null) return;
-    if (freeSeatHistory.Count == 0) return;
-
-    int serieIndex = 0;  
-
-    trendChart.ClearData();
-
-    for (int i = 0; i < freeSeatHistory.Count; i++)
     {
-        trendChart.AddData(serieIndex, i, freeSeatHistory[i]);
-    }
-    trendChart.RefreshChart();  
-}
+        string uiName = buildingDropdown.options[buildingDropdown.value].text;
+        List<int> list = history[uiName];
 
+        Serie serie = trendChart.series[0];
+        serie.ClearData();
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            serie.AddData(i, list[i]);
+        }
+
+        trendChart.RefreshChart();
+    }
 }
