@@ -177,4 +177,40 @@ public class DashboardController : MonoBehaviour
 
         trendChart.RefreshChart();
     }
+
+    public float GetFreeRate(string buildingName)
+{
+    if (latestData == null) return 0f;
+
+    string targetName =
+        buildingName == "One Pool Street" ? "East Campus - Pool St" :
+        "East Campus - Marshgate";
+
+    JObject targetSurvey = null;
+    foreach (var item in latestData["surveys"])
+    {
+        if (item["name"].ToString() == targetName)
+        {
+            targetSurvey = (JObject)item;
+            break;
+        }
+    }
+
+    if (targetSurvey == null) return 0f;
+
+    int free = targetSurvey["sensors_absent"].Value<int>();
+    int occ = targetSurvey["sensors_occupied"].Value<int>();
+    int total = free + occ;
+
+    if (total == 0) return 0;
+    return (float)free / total;
+}
+
+public void SetBuilding(string buildingName)
+{
+    int index = buildingDropdown.options.FindIndex(o => o.text == buildingName);
+    if (index >= 0)
+        buildingDropdown.value = index;
+}
+
 }
