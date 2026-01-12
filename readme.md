@@ -104,7 +104,8 @@ The LCD display presents additional textual prompts to help users get more preci
 
 Careful consideration was given to the placement of hardware and the wiring routes in the enclosure design stage to ensure easy access, maintenance and safety. Figure 1 is the design drawing of the circuit. The completed physic device successfully shows real-time response ability, establishes a good connection of strong legibility between live institutional data and physical movement.
 
-![image-20260112064142269](C:\Users\Tong\AppData\Roaming\Typora\typora-user-images\image-20260112064142269.png)
+<img width="606" height="659" alt="image" src="https://github.com/user-attachments/assets/51600939-a3ba-4cb0-9897-b1695796f012" />
+
 
 ​												Figure1: Wiring diagram
 
@@ -115,8 +116,8 @@ Careful consideration was given to the placement of hardware and the wiring rout
 ### 8.1.1 Overall Outcome
 
 Through the team's efforts, the physical device was successfully fabricated and assembled. All components are integrated within a 3D-printed enclosure. Functionally, the physical prototype successfully achieves the integration of data acquisition and computation, data visualisation, and human-machine interaction. The system operates with stable and reliable performance, maintaining a stable Wi-Fi connection and continuous data updates without requiring manual intervention.
+<img width="380" height="531" alt="image" src="https://github.com/user-attachments/assets/9071e445-07f3-48e5-8dfa-78d9cf454ece" />
 
-![img](file:///C:/Users/Tong/AppData/Local/Temp/msohtmlclip1/01/clip_image002.gif)
 
 ​										Figure 2: Prototype appearance
 
@@ -131,10 +132,8 @@ Upon receiving API data, the microprocessor employs programmed logic to identify
 ### 8.1.3 Physical Gauge Behaviour and Servo Mapping
 
  
+<img width="865" height="448" alt="image" src="https://github.com/user-attachments/assets/6c7d7875-6371-4666-99b0-4bd7ff275394" />
 
-|      |                                                              |
-| ---- | ------------------------------------------------------------ |
-|      | ![img](file:///C:/Users/Tong/AppData/Local/Temp/msohtmlclip1/01/clip_image004.gif) |
 
 ​										Figure 3: Gauge design draft
 
@@ -177,5 +176,6 @@ This project demonstrates how combining a physical gauge with an AR-based digita
 ·    Autodesk (n.d.) Fusion 360 Learning Panel. Available at: https://help.autodesk.com/view/fusion360/ENU/?guid=LEARNINGPANEL (Accessed: 6 January 2026). 
 
 ·    Jansen, Y., Dragicevic, P. and Fekete, J.-D. (2013) ‘Evaluating the efficiency of physical visualizations’, *Proceedings of the SIGCHI Conference on Human Factors in Computing Systems (CHI ’13)*, Paris, France, pp. 2593–2602. Available at: https://doi.org/10.1145/2470654.2481359 (Accessed: 7 January 2026)
+
 
 ·    Moggridge, B. (2007) Designing Interactions. *Cambridge, MA: MIT Press*. Available at: https://mitpress.mit.edu/9780262134743/designing-interactions/ (Accessed: 6 January 2026).
